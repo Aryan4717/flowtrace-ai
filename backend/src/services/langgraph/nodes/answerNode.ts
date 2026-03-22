@@ -54,7 +54,7 @@ export async function answerNode(
 
   try {
     const dataStr = JSON.stringify(queryResult, null, 2);
-    const prompt = getAnswerPrompt(dataStr);
+    const prompt = getAnswerPrompt(dataStr, userInput ?? '');
     const finalAnswer = await traceLlmCall({
       queryType: 'answer',
       input: { userInput, data: dataStr },
