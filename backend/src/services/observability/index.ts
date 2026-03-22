@@ -1,1 +1,8 @@
-// Observability service - placeholder for tracing and monitoring
+export {
+  traceLlmCall,
+  traceNode,
+  withNodeTracing,
+  flushLangfuse,
+  type TraceLlmCallOptions,
+  type TraceNodeOptions,
+} from './langfuse.service';
