@@ -40,6 +40,7 @@ export function mapDelivery(input: unknown): Delivery {
   const obj = toRecord(input);
   return {
     id: safeString(obj.deliveryDocument),
+    salesOrderId: safeString(obj.salesOrder) || safeString(obj.referenceDocument) || undefined,
     createdAt: safeDate(obj.creationDate),
   };
 }
@@ -49,6 +50,7 @@ export function mapInvoice(input: unknown): Invoice {
   return {
     id: safeString(obj.billingDocument),
     customerId: safeString(obj.soldToParty),
+    deliveryId: safeString(obj.referenceDelivery) || safeString(obj.deliveryDocument) || undefined,
     amount: safeNumber(obj.totalNetAmount),
     currency: safeString(obj.transactionCurrency),
     accountingDocument: safeString(obj.accountingDocument),

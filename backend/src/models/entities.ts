@@ -18,12 +18,14 @@ export interface SalesOrder {
 
 export interface Delivery {
   id: string;
+  salesOrderId?: string;
   createdAt: string;
 }
 
 export interface Invoice {
   id: string;
   customerId: string;
+  deliveryId?: string;
   amount: number;
   currency: string;
   accountingDocument: string;
