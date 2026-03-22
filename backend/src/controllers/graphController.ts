@@ -1,6 +1,27 @@
 import { Request, Response } from 'express';
-import { getNodeById, getNeighborsById } from '../services/graph';
+import {
+  getNodeById,
+  getNeighborsById,
+  getFullGraph,
+  getEntityById,
+} from '../services/graph';
 import { ValidationError, NotFoundError } from '../utils/errors';
+
+export async function getFullGraphData(_req: Request, res: Response): Promise<void> {
+  const data = getFullGraph();
+  res.json(data);
+}
+
+export async function getEntity(req: Request, res: Response): Promise<void> {
+  const id = validateId(req.params.id);
+
+  const result = getEntityById(id);
+  if (!result) {
+    throw new NotFoundError(`Entity not found: ${id}`);
+  }
+
+  res.json(result);
+}
 
 function validateId(id: string | undefined): string {
   if (id === undefined || id === null) {
