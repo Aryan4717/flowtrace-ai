@@ -1,19 +1,10 @@
 /**
- * Executes generated queries - SQL (via pg) or graph traversal.
+ * Executes generated queries - in-memory engine (predefined/structured) or graph traversal.
  */
-import { config } from '../../config';
 import { store } from '../data/store';
 import { buildGraphFromStore } from '../graph/graphBuilder';
 import type { NodeType } from '../graph/graph';
-
-const NODE_TYPES: NodeType[] = [
-  'Customer',
-  'SalesOrder',
-  'Delivery',
-  'Invoice',
-  'Payment',
-  'Product',
-];
+import { executeInMemoryQuery, matchPredefinedQuery } from '../query';
 
 function getEntitiesByType(type: NodeType): string[] {
   switch (type) {
@@ -41,66 +32,7 @@ export interface GraphPlan {
   filters?: Record<string, unknown>;
 }
 
-export async function executeQuery(
-  queryType: 'sql' | 'graph',
-  generatedQuery: string | Record<string, unknown> | null
-): Promise<unknown> {
-  if (!generatedQuery) {
-    return { rows: [], error: 'No query generated' };
-  }
-
-  if (queryType === 'sql') {
-    return executeSql(generatedQuery);
-  }
-
-  if (queryType === 'graph') {
-    return executeGraphPlan(generatedQuery);
-  }
-
-  return { rows: [], error: `Unknown query type: ${queryType}` };
-}
-
-async function executeSql(generatedQuery: string | Record<string, unknown>): Promise<unknown> {
-  let sql: string | null = null;
-  if (typeof generatedQuery === 'string') {
-    try {
-      const parsed = JSON.parse(generatedQuery) as { sql?: string };
-      sql = parsed?.sql ?? null;
-    } catch {
-      sql = generatedQuery;
-    }
-  } else if (generatedQuery && typeof generatedQuery === 'object' && 'sql' in generatedQuery) {
-    sql = String((generatedQuery as { sql: string }).sql);
-  }
-
-  if (!sql) {
-    return { rows: [], error: 'No SQL in generated query' };
-  }
-
-  if (!config.databaseUrl) {
-    return {
-      rows: [],
-      error: 'DATABASE_URL not configured. SQL execution requires PostgreSQL.',
-    };
-  }
-
-  try {
-    const { default: pg } = await import('pg');
-    const client = new pg.Client({ connectionString: config.databaseUrl });
-    await client.connect();
-    try {
-      const res = await client.query(sql);
-      return { rows: res.rows, rowCount: res.rowCount };
-    } finally {
-      await client.end();
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { rows: [], error: msg };
-  }
-}
-
-function executeGraphPlan(
+export function executeGraphPlan(
   generatedQuery: string | Record<string, unknown>
 ): { paths: string[][]; entities: unknown[] } {
   const graph = buildGraphFromStore();
@@ -146,4 +78,65 @@ function executeGraphPlan(
 
   const entities = paths.flat().slice(0, 50);
   return { paths: paths.slice(0, 20), entities };
+}
+
+export async function executeQuery(
+  queryType: 'sql' | 'graph',
+  generatedQuery: string | Record<string, unknown> | null,
+  userInput?: string
+): Promise<unknown> {
+  if (!generatedQuery) {
+    return { rows: [], error: 'No query generated' };
+  }
+
+  if (userInput && matchPredefinedQuery(userInput)) {
+    const inMemoryResult = executeInMemoryQuery({
+      userInput,
+      queryType: 'sql',
+      generatedQuery,
+    });
+    const hasRows = 'rows' in inMemoryResult && Array.isArray(inMemoryResult.rows) && inMemoryResult.rows.length > 0;
+    if (hasRows || ('error' in inMemoryResult && (inMemoryResult as { error?: string }).error)) {
+      return inMemoryResult;
+    }
+  }
+
+  if (queryType === 'graph') {
+    const graphResult = executeGraphPlan(generatedQuery);
+    const hasPaths = graphResult.paths.length > 0;
+    if (hasPaths) return graphResult;
+    if (userInput && matchPredefinedQuery(userInput)) {
+      const fallback = executeInMemoryQuery({ userInput, queryType: 'sql', generatedQuery });
+      return fallback;
+    }
+    return graphResult;
+  }
+
+  const inMemoryResult = executeInMemoryQuery({
+    userInput,
+    queryType: 'sql',
+    generatedQuery,
+  });
+
+  const hasRows =
+    'rows' in inMemoryResult &&
+    Array.isArray(inMemoryResult.rows) &&
+    inMemoryResult.rows.length > 0;
+
+  const hasError = 'error' in inMemoryResult && (inMemoryResult as { error?: string }).error;
+
+  if (hasRows || hasError) {
+    return inMemoryResult;
+  }
+
+  const isGraphPlan =
+    generatedQuery &&
+    typeof generatedQuery === 'object' &&
+    ('startType' in generatedQuery || 'endType' in generatedQuery || 'pathTypes' in generatedQuery);
+
+  if (isGraphPlan) {
+    return executeGraphPlan(generatedQuery);
+  }
+
+  return inMemoryResult;
 }

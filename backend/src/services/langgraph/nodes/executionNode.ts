@@ -22,10 +22,10 @@ export async function executionNode(
 
   return traceNode({
     nodeName: 'execution',
-    input: { queryType, generatedQuery },
+    input: { queryType, generatedQuery, userInput: state.userInput },
     execute: async () => {
       try {
-        const queryResult = await executeQuery(queryType, generatedQuery);
+        const queryResult = await executeQuery(queryType, generatedQuery, state.userInput);
         const hasError =
           queryResult &&
           typeof queryResult === 'object' &&
