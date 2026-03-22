@@ -46,10 +46,12 @@ export const GUARDRAIL_PROMPT = `Classify whether the following user query is re
 
 Query: {{query}}
 
-Output strictly as JSON only: {"classification": "relevant"|"off_topic"|"ambiguous", "confidence": 0.0-1.0}
+Output strictly as JSON only: {"classification": "relevant"|"off_topic"|"general_knowledge"|"creative"|"ambiguous", "confidence": 0.0-1.0}
 - relevant: query can be answered with the schema (customers, orders, deliveries, invoices, payments, products)
-- off_topic: unrelated to the dataset
-- ambiguous: unclear or needs clarification
+- off_topic: unrelated to the dataset (recipes, weather, sports, etc.)
+- general_knowledge: factual questions outside the dataset (capital of, who is, history, etc.)
+- creative: requests for creative writing (poem, story, joke, etc.)
+- ambiguous: unclear, mixed intent, or needs clarification
 No other text.`;
 
 export const ANSWER_PROMPT = `Given the following data, produce a clear, natural language explanation for the user.
