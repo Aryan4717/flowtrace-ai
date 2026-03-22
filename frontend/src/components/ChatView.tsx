@@ -11,9 +11,14 @@ interface ChatResponse {
   isValid: boolean;
   queryType: string | null;
   error: string | null;
+  highlightedNodeIds?: string[];
 }
 
-export function ChatView() {
+interface ChatViewProps {
+  onHighlight?: (ids: string[]) => void;
+}
+
+export function ChatView({ onHighlight }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,7 +45,9 @@ export function ChatView() {
 
     try {
       const res = await api.post<ChatResponse>('/chat', { message: trimmed });
-      const { finalAnswer, error: apiError } = res.data;
+      const { finalAnswer, error: apiError, highlightedNodeIds } = res.data;
+
+      onHighlight?.(highlightedNodeIds ?? []);
 
       if (apiError) {
         setError(apiError);
@@ -56,6 +63,7 @@ export function ChatView() {
         ]);
       }
     } catch (err: unknown) {
+      onHighlight?.([]);
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { error?: string } } }).response?.data?.error ??
