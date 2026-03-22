@@ -1,4 +1,5 @@
 export { withNodeTracing, traceNode, type TraceNodeOptions } from '../observability';
+export { keywordReject } from './guardrailKeywords';
 export { pipeline, type PipelineState, PipelineAnnotation } from './pipeline';
 
 import { pipeline } from './pipeline';
