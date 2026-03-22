@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from './services/api';
 import { GraphView } from './components/GraphView';
+import { ChatView } from './components/ChatView';
 
-type View = 'dashboard' | 'graph';
+type View = 'dashboard' | 'graph' | 'chat';
 
 function App() {
   const [view, setView] = useState<View>('dashboard');
@@ -47,6 +48,19 @@ function App() {
           >
             Graph
           </button>
+          <button
+            onClick={() => setView('chat')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: view === 'chat' ? '#333' : 'transparent',
+              color: view === 'chat' ? '#fff' : '#333',
+              border: '1px solid #333',
+              borderRadius: 6,
+              cursor: 'pointer',
+            }}
+          >
+            Chat
+          </button>
         </nav>
       </header>
 
@@ -58,6 +72,7 @@ function App() {
       )}
 
       {view === 'graph' && <GraphView />}
+      {view === 'chat' && <ChatView />}
     </main>
   );
 }
