@@ -3,8 +3,16 @@ export const PROMPT_KEYS = {
   SQL: 'sql',
   GRAPH: 'graph',
   GUARDRAIL: 'guardrail',
+  INTENT: 'intent',
   ANSWER: 'answer',
 } as const;
+
+export const INTENT_PROMPT = `Given the user query, determine whether it is better answered with SQL (aggregations, counts, filtering) or graph traversal (path between entities, relationships).
+
+Query: {{query}}
+
+Output strictly as JSON only: {"queryType": "sql"|"graph"}
+No other text.`;
 
 export const SYSTEM_PROMPT = `You are a dataset-bound assistant. Only answer using the provided schema and data. Do not hallucinate or invent information. If the answer is not in the data, say so.`;
 

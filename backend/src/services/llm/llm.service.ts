@@ -2,6 +2,7 @@ import {
   ANSWER_PROMPT,
   GRAPH_PROMPT,
   GUARDRAIL_PROMPT,
+  INTENT_PROMPT,
   SQL_PROMPT,
   SYSTEM_PROMPT,
 } from './prompts';
@@ -26,6 +27,12 @@ export function getGraphPrompt(userQuery: string): string {
 
 export function getGuardrailPrompt(userQuery: string): string {
   return buildPrompt(GUARDRAIL_PROMPT, {
+    query: userQuery,
+  });
+}
+
+export function getIntentPrompt(userQuery: string): string {
+  return buildPrompt(INTENT_PROMPT, {
     query: userQuery,
   });
 }
