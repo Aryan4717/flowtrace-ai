@@ -22,9 +22,14 @@ const STYLE = [
   { selector: '[type="Payment"]', style: { 'background-color': NODE_COLORS.Payment } },
   { selector: '[type="Product"]', style: { 'background-color': NODE_COLORS.Product } },
   { selector: 'edge', style: { 'curve-style': 'haystack', 'haystack-radius': 0, width: 1, 'target-arrow-color': '#999', 'target-arrow-shape': 'triangle', 'arrow-scale': 0.5 } },
+  { selector: '.highlighted', style: { 'border-width': 3, 'border-color': '#f0a500', 'border-style': 'solid' } },
 ];
 
-export function GraphView() {
+interface GraphViewProps {
+  highlightedNodeIds?: string[];
+}
+
+export function GraphView({ highlightedNodeIds = [] }: GraphViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const [elements, setElements] = useState<CytoscapeElements | null>(null);
@@ -101,6 +106,17 @@ export function GraphView() {
       cy.off('tap', 'node', onTap);
     };
   }, [elements]);
+
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    cy.nodes().removeClass('highlighted');
+    for (const id of highlightedNodeIds) {
+      const node = cy.getElementById(id);
+      if (node.length) node.addClass('highlighted');
+    }
+  }, [highlightedNodeIds, elements]);
 
   const handleExpandNeighbors = useCallback(() => {
     if (!selectedId || !cyRef.current) return;

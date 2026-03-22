@@ -9,6 +9,7 @@ function App() {
   const [view, setView] = useState<View>('dashboard');
   const [health, setHealth] = useState<{ status: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([]);
 
   useEffect(() => {
     api
@@ -71,8 +72,8 @@ function App() {
         </>
       )}
 
-      {view === 'graph' && <GraphView />}
-      {view === 'chat' && <ChatView />}
+      {view === 'graph' && <GraphView highlightedNodeIds={highlightedNodeIds} />}
+      {view === 'chat' && <ChatView onHighlight={setHighlightedNodeIds} />}
     </main>
   );
 }
