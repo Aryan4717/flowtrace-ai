@@ -13,3 +13,9 @@ export {
   getPayment,
   getProduct,
 } from './store';
+
+export {
+  ingestData,
+  type IngestResult,
+  type IngestCounts,
+} from './data.service';
