@@ -37,8 +37,9 @@ export function getIntentPrompt(userQuery: string): string {
   });
 }
 
-export function getAnswerPrompt(data: string): string {
+export function getAnswerPrompt(data: string, userQuery: string): string {
   return buildPrompt(ANSWER_PROMPT, {
     data,
+    query: userQuery,
   });
 }

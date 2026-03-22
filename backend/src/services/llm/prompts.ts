@@ -54,9 +54,18 @@ Output strictly as JSON only: {"classification": "relevant"|"off_topic"|"general
 - ambiguous: unclear, mixed intent, or needs clarification
 No other text.`;
 
-export const ANSWER_PROMPT = `Given the following data, produce a clear, natural language explanation for the user.
+export const ANSWER_PROMPT = `You are answering a user question about dataset results. Be accurate and grounded.
 
-Data:
-{{data}}
+User question: {{query}}
 
-Explain concisely. Use plain text.`;
+Data (JSON): {{data}}
+
+Rules:
+- Only use information explicitly present in the data. Do not invent or assume.
+- If the data is empty or does not answer the question, say so clearly.
+- Be concise and natural.
+
+Provide:
+1. A clear explanation that directly answers the user's question.
+2. Any insights (e.g. counts, totals, notable records) from the data.
+Use plain text. No markdown tables. No fabricated data.`;
