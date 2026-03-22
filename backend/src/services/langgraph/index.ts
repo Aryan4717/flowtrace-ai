@@ -1,11 +1,27 @@
-// LangGraph service - placeholder for future LangGraph workflows
-// When defining nodes, wrap with withNodeTracing for Langfuse observability:
-//
-// import { withNodeTracing } from '../observability';
-//
-// const sqlNode = withNodeTracing('sql_node', async (state) => {
-//   const result = await invokeSqlLlm(state.query, model);
-//   return { ...state, sql: result };
-// }, 'sql');
-
 export { withNodeTracing, traceNode, type TraceNodeOptions } from '../observability';
+export { pipeline, type PipelineState, PipelineAnnotation } from './pipeline';
+
+import { pipeline } from './pipeline';
+
+export async function runPipeline(userInput: string): Promise<{
+  finalAnswer: string;
+  isValid: boolean;
+  queryType: 'sql' | 'graph' | null;
+  error: string | null;
+}> {
+  const result = await pipeline.invoke({
+    userInput,
+    isValid: false,
+    queryType: null,
+    generatedQuery: null,
+    queryResult: undefined,
+    finalAnswer: '',
+    error: null,
+  });
+  return {
+    finalAnswer: result.finalAnswer ?? '',
+    isValid: result.isValid ?? false,
+    queryType: result.queryType ?? null,
+    error: result.error ?? null,
+  };
+}
