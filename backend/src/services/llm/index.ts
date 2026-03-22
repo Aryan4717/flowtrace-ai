@@ -7,3 +7,7 @@ export {
   getGuardrailPrompt,
   getAnswerPrompt,
 } from './llm.service';
+export {
+  traceLlmCall,
+  type TraceLlmCallOptions,
+} from '../observability';
