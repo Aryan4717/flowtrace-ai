@@ -31,6 +31,10 @@ export class Graph {
     if (neighbors) neighbors.add(toId);
   }
 
+  getNode(id: string): GraphNode | undefined {
+    return this.nodes.get(id);
+  }
+
   getNeighbors(nodeId: string): string[] {
     const neighbors = this.adjacencyList.get(nodeId);
     return neighbors ? Array.from(neighbors) : [];
