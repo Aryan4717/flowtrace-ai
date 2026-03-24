@@ -2,13 +2,15 @@ import OpenAI from 'openai';
 import { config } from '../../config';
 import {
   ANSWER_PROMPT,
+  FILTER_PROMPT,
   GRAPH_PROMPT,
   GUARDRAIL_PROMPT,
   INTENT_PROMPT,
-  SQL_PROMPT,
+  JSON_RETRY_PROMPT,
+  SQL_CORRECTION_PROMPT,
   SYSTEM_PROMPT,
 } from './prompts';
-import { buildPrompt, getSchemaString } from './promptBuilder';
+import { buildPrompt } from './promptBuilder';
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
 const MAX_RETRIES = 3;
@@ -78,11 +80,14 @@ function getStubResponse(prompt: string): string {
   if (prompt.includes('traversal plan') || prompt.includes('pathTypes')) {
     return '{"startType": "Customer", "endType": "Payment", "pathTypes": ["Customer","SalesOrder","Delivery","Invoice","Payment"], "filters": {}}';
   }
-  if (prompt.includes('"sql"')) {
-    return '{"sql": "SELECT * FROM customers LIMIT 5"}';
+  if (prompt.includes('query planner') || prompt.includes('STRICT JSON execution plan')) {
+    return '{"action":"GET_ALL","entity":"customers","filters":[]}';
+  }
+  if (prompt.includes('Return ONLY valid JSON') && prompt.includes('User query:')) {
+    return '{"action":"GET_ALL","entity":"customers","filters":[]}';
   }
   if (prompt.includes('"queryType"')) {
-    return '{"queryType": "graph"}';
+    return '{"queryType": "filter"}';
   }
   if (prompt.includes('natural language explanation') || prompt.includes('Explain concisely') || prompt.includes('User question:')) {
     return 'Here is the requested data, summarized for you.';
@@ -94,9 +99,20 @@ export function getSystemPrompt(): string {
   return SYSTEM_PROMPT;
 }
 
-export function getSqlPrompt(userQuery: string): string {
-  return buildPrompt(SQL_PROMPT, {
-    schema: getSchemaString(),
+export function getFilterPrompt(userQuery: string): string {
+  return buildPrompt(FILTER_PROMPT, {
+    query: userQuery,
+  });
+}
+
+export function getCorrectionPrompt(userQuery: string): string {
+  return buildPrompt(SQL_CORRECTION_PROMPT, {
+    query: userQuery,
+  });
+}
+
+export function getJsonRetryPrompt(userQuery: string): string {
+  return buildPrompt(JSON_RETRY_PROMPT, {
     query: userQuery,
   });
 }

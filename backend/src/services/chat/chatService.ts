@@ -6,7 +6,7 @@ import { runPipeline } from '../langgraph';
 export async function chat(message: string): Promise<{
   finalAnswer: string;
   isValid: boolean;
-  queryType: 'sql' | 'graph' | null;
+  queryType: 'filter' | 'graph' | null;
   error: string | null;
 }> {
   return runPipeline(message);

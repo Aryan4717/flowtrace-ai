@@ -9,7 +9,7 @@ import { withNodeTracing } from '../observability';
 const PipelineAnnotation = Annotation.Root({
   userInput: Annotation<string>(),
   isValid: Annotation<boolean>(),
-  queryType: Annotation<'sql' | 'graph' | null>(),
+  queryType: Annotation<'filter' | 'graph' | null>(),
   generatedQuery: Annotation<string | Record<string, unknown> | null>(),
   queryResult: Annotation<unknown>(),
   finalAnswer: Annotation<string>(),

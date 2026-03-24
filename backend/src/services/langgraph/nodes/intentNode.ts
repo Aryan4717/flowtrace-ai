@@ -20,11 +20,11 @@ export async function intentNode(
       nodeName: 'intent',
     });
 
-    let queryType: 'sql' | 'graph' = 'graph';
+    let queryType: 'filter' | 'graph' = 'graph';
     try {
       const parsed = JSON.parse(raw) as { queryType?: string };
       const qt = parsed?.queryType?.toLowerCase();
-      if (qt === 'sql' || qt === 'graph') {
+      if (qt === 'filter' || qt === 'graph') {
         queryType = qt;
       }
     } catch {

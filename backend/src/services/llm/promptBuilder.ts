@@ -35,6 +35,7 @@ export function buildPrompt(
   return replacePlaceholders(basePrompt, config);
 }
 
+/** SQL-style schema (legacy/fallback). */
 export function getSchemaString(): string {
   return `customers: id, name, created_at
 sales_orders: id, customer_id, created_at, total_amount, currency
@@ -48,4 +49,16 @@ Joins:
   deliveries.sales_order_id = sales_orders.id
   invoices.delivery_id = deliveries.id
   invoices.accounting_document = payments.id`;
+}
+
+/**
+ * In-memory store schema for FILTER_PROMPT. Uses camelCase field names as in entity interfaces.
+ */
+export function getInMemoryStoreSchemaString(): string {
+  return `- customers: Map<string, Customer> — id, name, createdAt
+- orders: Map<string, SalesOrder> (table name: sales_orders) — id, customerId, createdAt, totalAmount, currency
+- deliveries: Map<string, Delivery> — id, salesOrderId, createdAt
+- invoices: Map<string, Invoice> — id, customerId, deliveryId, amount, currency, accountingDocument, createdAt
+- payments: Map<string, Payment> — id, customerId, amount, currency, createdAt
+- products: Map<string, Product> — id, type, createdAt`;
 }
