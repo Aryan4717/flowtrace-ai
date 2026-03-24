@@ -1,5 +1,5 @@
 /**
- * Query engine: routes to predefined or structured. In-memory only.
+ * Query engine: routes to predefined or execution plan. In-memory only.
  */
 import { store } from '../data/store';
 import {
@@ -9,11 +9,15 @@ import {
   matchPredefinedQuery,
 } from './predefinedQueries';
 import { executeStructuredQuery } from './structuredExecutor';
+import { executeExecutionPlan, isExecutionPlan } from './executionPlan';
 import type { QueryResult, StructuredQuery } from './types';
+
+export const FILTER_PARSE_FALLBACK =
+  'Try queries like: unpaid invoices, show all customers, orders for customer followed by an ID.';
 
 export interface ExecuteInput {
   userInput?: string;
-  queryType?: 'sql' | 'graph';
+  queryType?: 'filter' | 'graph';
   generatedQuery?: string | Record<string, unknown> | null;
   structured?: StructuredQuery;
 }
@@ -33,7 +37,7 @@ function runPredefined(key: string): QueryResult {
 
 /**
  * Execute a query. Uses in-memory store only.
- * Flow: predefined match (by userInput) -> structured.
+ * Flow: optional structured (legacy) -> predefined match -> strict JSON execution plan.
  */
 export function executeInMemoryQuery(input: ExecuteInput): QueryResult | { paths: string[][]; entities: unknown[] } {
   const { userInput, generatedQuery, structured } = input;
@@ -50,20 +54,26 @@ export function executeInMemoryQuery(input: ExecuteInput): QueryResult | { paths
     }
   }
 
-  if (input.queryType === 'sql' && generatedQuery) {
-    const sqlObj = typeof generatedQuery === 'string'
-      ? (() => { try { return JSON.parse(generatedQuery) as Record<string, unknown>; } catch { return {}; } })()
-      : (generatedQuery as Record<string, unknown>);
-    if (sqlObj?.sql && userInput) {
-      const predefinedKey = matchPredefinedQuery(userInput);
-      if (predefinedKey) {
-        return runPredefined(predefinedKey);
+  if (input.queryType === 'filter' && generatedQuery) {
+    let obj: Record<string, unknown> | null = null;
+    if (typeof generatedQuery === 'string') {
+      try {
+        obj = JSON.parse(generatedQuery) as Record<string, unknown>;
+      } catch {
+        obj = null;
       }
+    } else if (generatedQuery && typeof generatedQuery === 'object') {
+      obj = generatedQuery as Record<string, unknown>;
     }
+
+    if (obj && isExecutionPlan(obj)) {
+      return executeExecutionPlan(obj, store);
+    }
+
     return {
       rows: [],
       rowCount: 0,
-      error: 'In-memory engine: try "highest billing", "orders not billed", or "unpaid invoices". Raw SQL is not executed.',
+      error: `Could not parse filter plan. ${FILTER_PARSE_FALLBACK}`,
     };
   }
 

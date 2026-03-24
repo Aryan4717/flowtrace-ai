@@ -1,35 +1,105 @@
 export const PROMPT_KEYS = {
   SYSTEM: 'system',
-  SQL: 'sql',
+  FILTER: 'filter',
   GRAPH: 'graph',
   GUARDRAIL: 'guardrail',
   INTENT: 'intent',
   ANSWER: 'answer',
 } as const;
 
-export const INTENT_PROMPT = `Given the user query, determine whether it is better answered with SQL (aggregations, counts, filtering) or graph traversal (path between entities, relationships).
+export const INTENT_PROMPT = `Given the user query, determine whether it is better answered with filtering/aggregation (counts, lists, filtering by criteria) or graph traversal (path between entities, relationships).
 
 Query: {{query}}
 
-Output strictly as JSON only: {"queryType": "sql"|"graph"}
+Output strictly as JSON only: {"queryType": "filter"|"graph"}
 No other text.`;
 
 export const SYSTEM_PROMPT = `You are a dataset-bound assistant. Only answer using the provided schema and data. Do not hallucinate or invent information. If the answer is not in the data, say so.`;
 
-export const SQL_PROMPT = `Convert the following natural language question to SQL.
+export const FILTER_PROMPT = `You are a query planner for an in-memory data system.
 
-Schema:
-{{schema}}
+Your job:
+Convert the user query into a STRICT JSON execution plan.
 
-Join chain (use when needed): sales_orders -> deliveries -> invoices -> payments
-- sales_orders JOIN deliveries ON deliveries.sales_order_id = sales_orders.id
-- deliveries JOIN invoices ON invoices.delivery_id = deliveries.id
-- invoices JOIN payments ON invoices.accounting_document = payments.id
+Available entities:
+- customers
+- orders
+- deliveries
+- invoices
+- payments
+- products
 
-Question: {{query}}
+Rules:
+- DO NOT generate SQL
+- DO NOT explain anything
+- DO NOT return text outside JSON
+- ONLY return valid JSON
+- response must be parseable with JSON.parse()
 
-Output strictly as JSON only: {"sql": "SELECT ..."}
-No other text.`;
+JSON format:
+
+{
+  "action": "GET_ALL" | "FILTER",
+  "entity": "customers" | "orders" | "invoices" | "payments" | "deliveries" | "products",
+  "filters": [
+    {
+      "field": "string",
+      "operator": "equals" | "not_exists",
+      "value": "string"
+    }
+  ]
+}
+
+Examples:
+
+User: show all customers
+Output:
+{
+  "action": "GET_ALL",
+  "entity": "customers",
+  "filters": []
+}
+
+User: unpaid invoices
+Output:
+{
+  "action": "FILTER",
+  "entity": "invoices",
+  "filters": [
+    {
+      "field": "payment",
+      "operator": "not_exists"
+    }
+  ]
+}
+
+User: orders for customer 320000083
+Output:
+{
+  "action": "FILTER",
+  "entity": "orders",
+  "filters": [
+    {
+      "field": "customerId",
+      "operator": "equals",
+      "value": "320000083"
+    }
+  ]
+}
+
+User Query:
+{{query}}`;
+
+export const SQL_CORRECTION_PROMPT = `You must NOT output SQL. Return ONLY the same JSON execution plan format as specified (action, entity, filters). No markdown, no explanation.
+
+User query: {{query}}`;
+
+export const JSON_RETRY_PROMPT = `Return ONLY valid JSON. No markdown code fences, no explanation, no text before or after the JSON object.
+
+Use this exact shape:
+{"action":"GET_ALL"|"FILTER","entity":"customers"|"orders"|"deliveries"|"invoices"|"payments"|"products","filters":[{"field":"string","operator":"equals"|"not_exists","value":"optional"}]}
+
+User query: {{query}}`;
 
 export const GRAPH_PROMPT = `Convert the following natural language question to a graph traversal plan.
 

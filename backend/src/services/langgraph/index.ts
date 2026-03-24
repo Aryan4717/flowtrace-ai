@@ -8,7 +8,7 @@ import { extractNodeIds } from '../../utils/extractNodeIds';
 export async function runPipeline(userInput: string): Promise<{
   finalAnswer: string;
   isValid: boolean;
-  queryType: 'sql' | 'graph' | null;
+  queryType: 'filter' | 'graph' | null;
   error: string | null;
   highlightedNodeIds: string[];
 }> {

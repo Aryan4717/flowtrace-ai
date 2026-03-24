@@ -81,7 +81,7 @@ export function executeGraphPlan(
 }
 
 export async function executeQuery(
-  queryType: 'sql' | 'graph',
+  queryType: 'filter' | 'graph',
   generatedQuery: string | Record<string, unknown> | null,
   userInput?: string
 ): Promise<unknown> {
@@ -92,7 +92,7 @@ export async function executeQuery(
   if (userInput && matchPredefinedQuery(userInput)) {
     const inMemoryResult = executeInMemoryQuery({
       userInput,
-      queryType: 'sql',
+      queryType: 'filter',
       generatedQuery,
     });
     const hasRows = 'rows' in inMemoryResult && Array.isArray(inMemoryResult.rows) && inMemoryResult.rows.length > 0;
@@ -106,7 +106,7 @@ export async function executeQuery(
     const hasPaths = graphResult.paths.length > 0;
     if (hasPaths) return graphResult;
     if (userInput && matchPredefinedQuery(userInput)) {
-      const fallback = executeInMemoryQuery({ userInput, queryType: 'sql', generatedQuery });
+      const fallback = executeInMemoryQuery({ userInput, queryType: 'filter', generatedQuery });
       return fallback;
     }
     return graphResult;
@@ -114,7 +114,7 @@ export async function executeQuery(
 
   const inMemoryResult = executeInMemoryQuery({
     userInput,
-    queryType: 'sql',
+    queryType: 'filter',
     generatedQuery,
   });
 
