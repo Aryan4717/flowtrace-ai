@@ -82,3 +82,7 @@ npm run dev:frontend  # Frontend only
 | `npm run dev:frontend` | Run frontend only |
 | `npm run install:all` | Install deps in root, backend, and frontend |
 | `npm run build` | Build both backend and frontend |
+
+## Production deployment (Vercel + Railway)
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for environment variables, platform settings, and troubleshooting.
