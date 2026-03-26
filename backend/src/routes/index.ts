@@ -5,9 +5,11 @@ import flowRoutes from './flow';
 import chatRoutes from './chat';
 import graphRoutes from './graph';
 import traceRoutes from './trace';
+import statsRoutes from './stats';
 
 const router = Router();
 router.use('/health', healthRoutes);
+router.use('/stats', statsRoutes);
 router.use('/query', queryRoutes);
 router.use('/flow', flowRoutes);
 router.use('/chat', chatRoutes);
