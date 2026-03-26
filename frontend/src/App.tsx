@@ -1,23 +1,49 @@
-import { useEffect, useState } from 'react';
-import { api } from './services/api';
+import { useState } from 'react';
+import { GraphView } from './components/GraphView';
+import { ChatView } from './components/ChatView';
+import { DashboardView } from './components/DashboardView';
+
+type View = 'dashboard' | 'graph' | 'chat';
 
 function App() {
-  const [health, setHealth] = useState<{ status: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api
-      .get('/health')
-      .then((res) => setHealth(res.data))
-      .catch((err) => setError(err.message));
-  }, []);
+  const [view, setView] = useState<View>('dashboard');
+  const [highlightedNodeIds, setHighlightedNodeIds] = useState<string[]>([]);
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1>FlowTrace AI</h1>
-      {health && <p>API Status: {health.status}</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-    </main>
+    <div className="app-shell">
+      <header className="app-header">
+        <h1 className="app-brand">FlowTrace AI</h1>
+        <nav className="app-nav" aria-label="Primary">
+          <button
+            type="button"
+            className={`nav-tab ${view === 'dashboard' ? 'nav-tab--active' : ''}`}
+            onClick={() => setView('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button
+            type="button"
+            className={`nav-tab ${view === 'graph' ? 'nav-tab--active' : ''}`}
+            onClick={() => setView('graph')}
+          >
+            Graph
+          </button>
+          <button
+            type="button"
+            className={`nav-tab ${view === 'chat' ? 'nav-tab--active' : ''}`}
+            onClick={() => setView('chat')}
+          >
+            Chat
+          </button>
+        </nav>
+      </header>
+
+      <div className="app-main">
+        {view === 'dashboard' && <DashboardView />}
+        {view === 'graph' && <GraphView highlightedNodeIds={highlightedNodeIds} />}
+        {view === 'chat' && <ChatView onHighlight={setHighlightedNodeIds} />}
+      </div>
+    </div>
   );
 }
 

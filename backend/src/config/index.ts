@@ -6,6 +6,9 @@ export const config = {
   port: parseInt(process.env.PORT ?? '3001', 10),
   databaseUrl: process.env.DATABASE_URL ?? '',
   dataPath: process.env.DATA_PATH ?? './data',
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY ?? '',
+  },
   langfuse: {
     publicKey: process.env.LANGFUSE_PUBLIC_KEY ?? '',
     secretKey: process.env.LANGFUSE_SECRET_KEY ?? '',

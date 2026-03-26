@@ -16,6 +16,7 @@ export {
 
 export {
   ingestData,
+  SAP_DATASET_PATH,
   type IngestResult,
   type IngestCounts,
 } from './data.service';

@@ -3,12 +3,14 @@ export { keywordReject } from './guardrailKeywords';
 export { pipeline, type PipelineState, PipelineAnnotation } from './pipeline';
 
 import { pipeline } from './pipeline';
+import { extractNodeIds } from '../../utils/extractNodeIds';
 
 export async function runPipeline(userInput: string): Promise<{
   finalAnswer: string;
   isValid: boolean;
-  queryType: 'sql' | 'graph' | null;
+  queryType: 'filter' | 'graph' | null;
   error: string | null;
+  highlightedNodeIds: string[];
 }> {
   const result = await pipeline.invoke({
     userInput,
@@ -24,5 +26,6 @@ export async function runPipeline(userInput: string): Promise<{
     isValid: result.isValid ?? false,
     queryType: result.queryType ?? null,
     error: result.error ?? null,
+    highlightedNodeIds: extractNodeIds(result.queryResult) ?? [],
   };
 }

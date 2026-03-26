@@ -31,6 +31,24 @@ export class Graph {
     if (neighbors) neighbors.add(toId);
   }
 
+  getNode(id: string): GraphNode | undefined {
+    return this.nodes.get(id);
+  }
+
+  getAllNodes(): GraphNode[] {
+    return Array.from(this.nodes.values());
+  }
+
+  getAllEdges(): { source: string; target: string }[] {
+    const edges: { source: string; target: string }[] = [];
+    for (const [sourceId, targets] of this.adjacencyList) {
+      for (const targetId of targets) {
+        edges.push({ source: sourceId, target: targetId });
+      }
+    }
+    return edges;
+  }
+
   getNeighbors(nodeId: string): string[] {
     const neighbors = this.adjacencyList.get(nodeId);
     return neighbors ? Array.from(neighbors) : [];

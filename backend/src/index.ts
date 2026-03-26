@@ -4,6 +4,7 @@ import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
 import { loggingMiddleware } from './middleware/logging';
 import routes from './routes';
+import { ingestData } from './services/data/data.service';
 
 const app = express();
 
@@ -15,6 +16,16 @@ app.use(routes);
 
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  console.log(`Server running on http://localhost:${config.port}`);
-});
+async function main(): Promise<void> {
+  try {
+    await ingestData();
+  } catch (err) {
+    console.error('[SAP Ingestion] Startup ingestion failed:', err);
+  }
+
+  app.listen(config.port, () => {
+    console.log(`Server running on http://localhost:${config.port}`);
+  });
+}
+
+void main();

@@ -60,7 +60,7 @@ export async function traceLlmCall<T>(opts: TraceLlmCallOptions<T>): Promise<T> 
   const generation = trace.generation({
     name: `generation:${queryType}`,
     input: [{ role: 'user', content: prompt }],
-    model: model ?? 'unknown',
+    model: model ?? 'gpt-4o-mini',
     metadata: {
       queryType,
       ...(nodeName && { nodeName }),

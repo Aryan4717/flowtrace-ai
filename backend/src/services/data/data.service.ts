@@ -1,5 +1,5 @@
+import * as fs from 'fs/promises';
 import * as path from 'path';
-import { config } from '../../config';
 import {
   mapCustomer,
   mapDelivery,
@@ -15,9 +15,18 @@ import {
   insertPayment,
   insertProduct,
   insertSalesOrder,
+  store,
 } from './store';
 import { loadJSONFiles } from '../../utils/jsonLoader';
 import { normalizeRecord } from '../../utils/normalizeRecord';
+
+const LOG_PREFIX = '[SAP Ingestion]';
+
+/** Resolved from compiled location: dist/services/data -> backend/data/sap-o2c-data */
+export const SAP_DATASET_PATH = path.resolve(
+  __dirname,
+  '../../../data/sap-o2c-data'
+);
 
 export interface EntityWithId {
   id: string;
@@ -75,6 +84,15 @@ function toRecord(input: unknown): Record<string, unknown> {
     : {};
 }
 
+async function isDirectory(folderPath: string): Promise<boolean> {
+  try {
+    const stat = await fs.stat(folderPath);
+    return stat.isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 async function ingestFolder(
   basePath: string,
   folder: FolderName,
@@ -88,27 +106,40 @@ async function ingestFolder(
   let skipped = 0;
 
   for (const raw of rawRecords) {
-    const normalized = normalizeRecord(toRecord(raw));
-    const entity = mapper(normalized);
+    try {
+      const normalized = normalizeRecord(toRecord(raw));
+      const entity = mapper(normalized);
 
-    if (!entity.id) {
+      if (!entity.id) {
+        skipped++;
+        continue;
+      }
+
+      insert(entity, true);
+      ok++;
+    } catch {
       skipped++;
-      continue;
     }
-
-    insert(entity, true);
-    ok++;
   }
 
   return { ok, skipped };
 }
 
+function logStoreSizes(): void {
+  console.log(
+    `${LOG_PREFIX} Store sizes: customers=${store.customers.size}, orders=${store.orders.size}, deliveries=${store.deliveries.size}, invoices=${store.invoices.size}, payments=${store.payments.size}, products=${store.products.size}`
+  );
+}
+
 /**
- * Loads JSON from data folders, normalizes records, maps to entities, and inserts into the in-memory store.
+ * Loads JSON/JSONL from data folders, normalizes records, maps to entities, and inserts into the in-memory store.
  * Handles invalid data (skips records with empty id), duplicates (upsert), and missing folders (0 items).
  */
 export async function ingestData(basePath?: string): Promise<IngestResult> {
-  const dataPath = basePath ?? config.dataPath;
+  const dataPath = path.resolve(basePath ?? SAP_DATASET_PATH);
+
+  console.log(`${LOG_PREFIX} Base path:`, dataPath);
+
   const result: IngestResult = {
     customers: { ok: 0, skipped: 0 },
     products: { ok: 0, skipped: 0 },
@@ -119,9 +150,50 @@ export async function ingestData(basePath?: string): Promise<IngestResult> {
   };
 
   for (const folder of INGESTION_ORDER) {
+    const folderPath = path.join(dataPath, folder);
     const { mapper, insert } = FOLDER_ENTITY_MAP[folder];
-    const counts = await ingestFolder(dataPath, folder, mapper, insert);
-    result[ENTITY_KEY[folder]] = counts;
+
+    try {
+      const exists = await isDirectory(folderPath);
+      if (!exists) {
+        console.warn(
+          `${LOG_PREFIX} Folder missing or not a directory, skipping: ${folderPath}`
+        );
+        continue;
+      }
+
+      const counts = await ingestFolder(dataPath, folder, mapper, insert);
+      result[ENTITY_KEY[folder]] = counts;
+
+      console.log(
+        `${LOG_PREFIX} Loading ${folder}... ${counts.ok} records loaded (${counts.skipped} skipped)`
+      );
+    } catch (err) {
+      console.warn(
+        `${LOG_PREFIX} Error ingesting folder "${folder}":`,
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
+
+  logStoreSizes();
+
+  const totalEntities =
+    store.customers.size +
+    store.orders.size +
+    store.deliveries.size +
+    store.invoices.size +
+    store.payments.size +
+    store.products.size;
+
+  if (totalEntities === 0) {
+    console.warn(
+      `${LOG_PREFIX} Warning: store is empty after ingestion. Check base path and dataset folders.`
+    );
+  } else {
+    console.log(
+      `${LOG_PREFIX} Complete. Summary — customers: ${store.customers.size}, products: ${store.products.size}, orders: ${store.orders.size}, deliveries: ${store.deliveries.size}, invoices: ${store.invoices.size}, payments: ${store.payments.size}`
+    );
   }
 
   return result;
