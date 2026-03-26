@@ -8,7 +8,12 @@ import { ingestData } from './services/data/data.service';
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: config.corsOrigin,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(loggingMiddleware);
 
